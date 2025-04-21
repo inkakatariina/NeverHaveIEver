@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>I Have Never Game</title>
+  <link rel="stylesheet" href="style.css" />
+
+</head>
+<body>
+
+  <!-- Takaisin-nappi näkyy kaikilla sivuilla -->
+  <button class="back-button hidden" onclick="goBack()">←</button>
+
+  <!-- Tervetuloa-näyttö -->
+  <div class="screen" id="welcome-screen">
+    <h1>Welcome!</h1>
+    <p>This is the "I Have Never" game.<br>Hope you enjoy!</p>
+    <button onclick="showScreen('instructions')">Instructions</button>
+    <button onclick="showScreen('add-players')">Get Started</button>
+  </div>
+
+  <!-- Ohjeet-näyttö -->
+  <div class="screen hidden" id="instructions">
+    <h2>Instructions</h2>
+    <p>Each player takes turns saying something they have never done. If other players have done it, they take a point (or a drink 😄).</p>
+    <button onclick="showScreen('welcome-screen')">Back to Welcome</button>
+  </div>
+
+  <!-- Pelaajien lisääminen -->
+  <div class="screen hidden" id="add-players">
+    <h2>Add players</h2>
+    <div id="player-list">
+      <!-- Pelaajapainikkeet ilmestyvät tänne -->
+    </div>
+    <input type="text" id="player-name-input" placeholder="Enter player name" />
+    <button onclick="addPlayer()">Add Player</button>
+    <button onclick="showScreen('choose-game')">Next</button>
+  </div>
+
+  <!-- Mahdollinen seuraava näyttö (placeholder) -->
+  <div class="screen hidden" id="choose-game">
+    <h2>Choose game mode</h2>
+    <p>Game modes coming soon...</p>
+    <button onclick="showScreen('welcome-screen')">Back to Welcome</button>
+  </div>
+
+  <script>
+    let players = [];
+    let screenHistory = [];
+
+    function showScreen(id) {
+      const currentVisible = document.querySelector('.screen:not(.hidden)');
+      if (currentVisible) {
+        screenHistory.push(currentVisible.id);
+      }
+
+      document.querySelectorAll('.screen').forEach(screen => {
+        screen.classList.add('hidden');
+      });
+
+      document.getElementById(id).classList.remove('hidden');
+
+      const backButton = document.querySelector('.back-button');
+      if (screenHistory.length > 0) {
+        backButton.classList.remove('hidden');
+      } else {
+        backButton.classList.add('hidden');
+      }
+    }
+
+    function goBack() {
+      if (screenHistory.length > 0) {
+        const previousScreen = screenHistory.pop();
+        document.querySelectorAll('.screen').forEach(screen => {
+          screen.classList.add('hidden');
+        });
+        document.getElementById(previousScreen).classList.remove('hidden');
+
+        const backButton = document.querySelector('.back-button');
+        if (screenHistory.length > 0) {
+          backButton.classList.remove('hidden');
+        } else {
+          backButton.classList.add('hidden');
+        }
+      }
+    }
+
+    function addPlayer() {
+      const playerNameInput = document.getElementById('player-name-input');
+      const playerName = playerNameInput.value.trim();
+
+      if (playerName) {
+        players.push(playerName);
+        updatePlayerList();
+        playerNameInput.value = '';
+      } else {
+        alert('Please enter a player name.');
+      }
+    }
+
+    function updatePlayerList() {
+      const playerList = document.getElementById('player-list');
+      playerList.innerHTML = '';
+
+      players.forEach(player => {
+        const playerBtn = document.createElement('button');
+        playerBtn.className = 'player-btn';
+        playerBtn.innerText = player;
+        playerList.appendChild(playerBtn);
+      });
+    }
+  </script>
+
+</body>
+</html>
