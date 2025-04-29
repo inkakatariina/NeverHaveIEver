@@ -87,7 +87,7 @@
 
   <!-- Pelin kysymykset -->
   <div class="screen hidden" id="game-screen">
-    <h2>Game Question</h2>
+    <h2 id="game-mode-title">Game Question</h2>
     <p id="game-question"></p>
     <button onclick="nextQuestion()">Next Question</button>
   </div>
@@ -180,7 +180,7 @@
 
     // Funktio kysymysten hakemiseen JSON-tiedostosta
     function fetchQuestions() {
-      fetch('questions.json')
+      fetch('data.json')
         .then(response => response.json())
         .then(data => {
           questions = [];
