@@ -85,10 +85,21 @@
     <button onclick="showScreen('welcome-screen')">Back to Welcome</button>
   </div>
 
+  <!-- Pelin kysymykset -->
+  <div class="screen hidden" id="game-screen">
+    <h2>Game Question</h2>
+    <p id="game-question"></p>
+    <button onclick="nextQuestion()">Next Question</button>
+  </div>
+
   <script>
     let players = [];
     let screenHistory = [];
+    let selectedModes = [];
+    let currentQuestionIndex = 0;
+    let questions = [];
 
+    // Funktio näyttämään ruudut
     function showScreen(id) {
       const currentVisible = document.querySelector('.screen:not(.hidden)');
       if (currentVisible) {
@@ -126,6 +137,7 @@
       }
     }
 
+    // Funktio pelaajan lisäämiseen
     function addPlayer() {
       const playerNameInput = document.getElementById('player-name-input');
       const playerName = playerNameInput.value.trim();
@@ -150,7 +162,60 @@
         playerList.appendChild(playerBtn);
       });
     }
+
+    // Funktio pelitilan valitsemiseen ja kysymysten lataamiseen
+    function startGame() {
+      selectedModes = [];
+      document.querySelectorAll('input[name="mode"]:checked').forEach(checkbox => {
+        selectedModes.push(checkbox.value);
+      });
+
+      if (selectedModes.length > 0) {
+        fetchQuestions();
+        showScreen('game-screen');
+      } else {
+        alert('Please select at least one game mode.');
+      }
+    }
+
+    // Funktio kysymysten hakemiseen JSON-tiedostosta
+    function fetchQuestions() {
+      fetch('questions.json')
+        .then(response => response.json())
+        .then(data => {
+          questions = [];
+
+          // Hakee kysymykset valituilta pelitiloilta
+          selectedModes.forEach(mode => {
+            if (data[mode]) {
+              questions = questions.concat(data[mode]);
+            }
+          });
+
+          // Näytetään ensimmäinen kysymys
+          showQuestion();
+        })
+        .catch(error => {
+          console.error('Error loading questions:', error);
+        });
+    }
+
+    // Funktio kysymyksen näyttämiseen
+    function showQuestion() {
+      if (currentQuestionIndex < questions.length) {
+        document.getElementById('game-question').innerText = questions[currentQuestionIndex];
+      } else {
+        alert('No more questions!');
+      }
+    }
+
+    // Funktio seuraavan kysymyksen näyttämiseen
+    function nextQuestion() {
+      currentQuestionIndex++;
+      showQuestion();
+    }
   </script>
+
 
 </body>
 </html>

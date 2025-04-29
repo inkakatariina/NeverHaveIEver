@@ -30,4 +30,41 @@ function startGame() {
     // Seuraava vaihe pelissä:
     // showScreen('game-screen'); // jos teet peliruudun
   }
-  
+  let selectedModes = [];
+let currentQuestions = [];
+let currentQuestionIndex = 0;
+
+function startGame() {
+  // Tyhjennetään aiemmin valitut kysymykset
+  currentQuestions = [];
+  currentQuestionIndex = 0;
+
+  // Haetaan valitut pelitilat
+  selectedModes = Array.from(document.querySelectorAll('input[name="mode"]:checked'))
+    .map(input => input.value);
+
+  // Haetaan kysymykset JSON-tiedostosta
+  fetch('data.json')
+    .then(response => response.json())
+    .then(data => {
+      // Yhdistetään kysymykset valituista pelitiloista
+      selectedModes.forEach(mode => {
+        if (data[mode]) {
+          currentQuestions = currentQuestions.concat(data[mode]);
+        }
+      });
+
+      // Näytetään ensimmäinen kysymys
+      showQuestion();
+    });
+}
+
+function showQuestion() {
+  if (currentQuestionIndex < currentQuestions.length) {
+    const question = currentQuestions[currentQuestionIndex];
+    alert(question);  // Voit muuttaa tämän koodin osaksi pelin UI:ta
+    currentQuestionIndex++;
+  } else {
+    alert('The game has ended!');  // Pelin loppu
+  }
+}
