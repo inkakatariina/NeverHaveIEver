@@ -91,4 +91,32 @@ input[type="text"]:focus {
   z-index: 1000;
 }
 
+.mode-selection {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.mode-option {
+  display: block;
+  background-color: #f0f0f0;
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-weight: bold;
+  user-select: none;
+}
+
+.mode-option:hover {
+  background-color: #e0e0e0;
+}
+
+.mode-option input:checked + span {
+  background-color: #4CAF50;
+  color: white;
+  display: block;
+  padding: 12px;
+  border-radius: 8px;
+}
 

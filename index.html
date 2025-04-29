@@ -42,17 +42,43 @@
   <div class="screen hidden" id="choose-game">
     <h2>Choose game mode</h2>
 <p>Select one or more game modes:</p>
-<form id="game-modes-form">
-  <label><input type="checkbox" name="mode" value="workAndSchool" /> Work & School</label><br>
-  <label><input type="checkbox" name="mode" value="embarrassingMoments" /> Embarrassing & Awkward Moments</label><br>
-  <label><input type="checkbox" name="mode" value="travelAdventure" /> Travel & Adventure</label><br>
-  <label><input type="checkbox" name="mode" value="relationshipDating" /> Relationship & Dating</label><br>
-  <label><input type="checkbox" name="mode" value="partyFun" /> Party & Fun</label><br>
-  <label><input type="checkbox" name="mode" value="moneyShopping" /> Money & Shopping</label><br>
-  <label><input type="checkbox" name="mode" value="girlsNight" /> Girls' Night</label><br>
-  <label><input type="checkbox" name="mode" value="all" /> All (includes all categories)</label><br><br>
-  <button type="button" onclick="startGame()">Start Game</button>
-</form>
+<div class="mode-selection">
+  <label class="mode-option">
+    <input type="checkbox" name="mode" value="workAndSchool" hidden>
+    <span>Work & School</span>
+  </label>
+  <label class="mode-option">
+    <input type="checkbox" name="mode" value="embarrassingMoments" hidden>
+    <span>Embarrassing & Awkward Moments</span>
+  </label>
+  <label class="mode-option">
+    <input type="checkbox" name="mode" value="travelAdventure" hidden>
+    <span>Travel & Adventure</span>
+  </label>
+  <label class="mode-option">
+    <input type="checkbox" name="mode" value="relationshipDating" hidden>
+    <span>Relationship & Dating</span>
+  </label>
+  <label class="mode-option">
+    <input type="checkbox" name="mode" value="partyFun" hidden>
+    <span>Party & Fun</span>
+  </label>
+  <label class="mode-option">
+    <input type="checkbox" name="mode" value="moneyShopping" hidden>
+    <span>Money & Shopping</span>
+  </label>
+  <label class="mode-option">
+    <input type="checkbox" name="mode" value="girlsNight" hidden>
+    <span>Girls' Night</span>
+  </label>
+  <label class="mode-option">
+    <input type="checkbox" name="mode" value="all" hidden>
+    <span>All (includes all categories)</span>
+  </label>
+</div>
+<br>
+<button type="button" onclick="startGame()">Start Game</button>
+
 
 
 
