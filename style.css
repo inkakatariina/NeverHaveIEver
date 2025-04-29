@@ -91,22 +91,4 @@ input[type="text"]:focus {
   z-index: 1000;
 }
 
-/* Taustalla oleva kysymysmerkki */
-.background-question-mark {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 40vw;
-  color: pink;
-  opacity: 0.1;
-  z-index: 0;
-  pointer-events: none;
-  user-select: none;
-}
 
-/* Nostetaan varsinainen sisältö kysymysmerkin päälle */
-body > *:not(.background-question-mark) {
-  position: relative;
-  z-index: 1;
-}
