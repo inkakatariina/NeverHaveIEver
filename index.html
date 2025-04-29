@@ -41,7 +41,21 @@
   <!-- Mahdollinen seuraava näyttö (placeholder) -->
   <div class="screen hidden" id="choose-game">
     <h2>Choose game mode</h2>
-    <p>Game modes coming soon...</p>
+<p>Select one or more game modes:</p>
+<form id="game-modes-form">
+  <label><input type="checkbox" name="mode" value="workAndSchool" /> Work & School</label><br>
+  <label><input type="checkbox" name="mode" value="embarrassingMoments" /> Embarrassing & Awkward Moments</label><br>
+  <label><input type="checkbox" name="mode" value="travelAdventure" /> Travel & Adventure</label><br>
+  <label><input type="checkbox" name="mode" value="relationshipDating" /> Relationship & Dating</label><br>
+  <label><input type="checkbox" name="mode" value="partyFun" /> Party & Fun</label><br>
+  <label><input type="checkbox" name="mode" value="moneyShopping" /> Money & Shopping</label><br>
+  <label><input type="checkbox" name="mode" value="girlsNight" /> Girls' Night</label><br>
+  <label><input type="checkbox" name="mode" value="all" /> All (includes all categories)</label><br><br>
+  <button type="button" onclick="startGame()">Start Game</button>
+</form>
+
+
+
     <button onclick="showScreen('welcome-screen')">Back to Welcome</button>
   </div>
 
