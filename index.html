@@ -18,6 +18,8 @@
     <p>This is the "I Have Never" game.<br>Hope you enjoy!</p>
     <button onclick="showScreen('instructions')">Instructions</button>
     <button onclick="showScreen('add-players')">Get Started</button>
+    <button onclick="generateQR()">Share Game</button>
+
   </div>
 
   <!-- Ohjeet-näyttö -->
@@ -26,6 +28,16 @@
     <p>Each player takes turns saying something they have never done. If other players have done it, they take a point (or a drink 😄).</p>
     <button onclick="showScreen('welcome-screen')">Back to Welcome</button>
   </div>
+
+  <!-- QR-koodi ja jaettava linkki -->
+<div id="qr-section" class="screen hidden">
+  <h2>Share the Game</h2>
+  <p>Scan the QR code or share the link below to join:</p>
+  <canvas id="qrcode"></canvas>
+  <p id="qr-url"></p>
+  <button onclick="showScreen('welcome-screen')">Back to Welcome</button>
+</div>
+
 
   <!-- Pelaajien lisääminen -->
   <div class="screen hidden" id="add-players">
@@ -202,6 +214,32 @@
       showQuestion();
     }
   </script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+<div id="qrcode"></div>
+
+<script>
+  const playerName = "Inka";  // Tämä voisi tulla input-kentästä
+  const gameId = "1234";      // Voit generoida satunnaisesti
+
+  const url = `https://sinunsivusi.fi/game.html?game=${gameId}&player=${playerName}`;
+  QRCode.toCanvas(document.getElementById('qrcode'), url, function (error) {
+    if (error) console.error(error);
+  });
+
+  function generateQR() {
+  const playerName = "Inka"; // Voit myöhemmin ottaa syötteenä
+  const gameId = "1234"; // Voit tehdä myös satunnaisen
+  const url = `https://sinunsivusi.fi/game.html?game=${gameId}&player=${encodeURIComponent(playerName)}`;
+  
+  QRCode.toCanvas(document.getElementById('qrcode'), url, function (error) {
+    if (error) console.error(error);
+  });
+
+  document.getElementById('qr-url').innerText = url;
+  showScreen('qr-section');
+}
+
+</script>
 
 
 

@@ -1,0 +1,50 @@
+<!-- game.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Answer</title>
+</head>
+<body>
+  <h1>Welcome to the game!</h1>
+<p id="game-info"></p>
+
+
+  <button onclick="submitAnswer('have')">I Have</button>
+  <button onclick="submitAnswer('have-not')">I Have Not</button>
+
+  <script>
+    // Hae URL-parametrit
+    const urlParams = new URLSearchParams(window.location.search);
+    const playerName = urlParams.get('player');
+    const gameId = urlParams.get('game');
+
+    document.getElementById('greeting').innerText = `Hi ${playerName}!`;
+
+    // (Tässä esimerkissä kysymys on kiinteä)
+    document.getElementById('question').innerText = "Never have I ever... gone skydiving";
+
+    function submitAnswer(answer) {
+      alert(`Answer from ${playerName} (${gameId}): ${answer}`);
+      // Tässä voit lisätä koodin, joka esim. lähettää vastauksen Google Sheetiin
+    }
+
+  </script>
+
+<script>
+    function getParams() {
+      const params = new URLSearchParams(window.location.search);
+      return {
+        player: params.get('player'),
+        game: params.get('game')
+      };
+    }
+  
+    const { player, game } = getParams();
+    const gameInfo = document.getElementById('game-info');
+    gameInfo.innerText = `Player: ${player}, Game ID: ${game}`;
+  </script>
+  
+</body>
+</html>
