@@ -155,15 +155,15 @@
   const playerList = document.getElementById('player-list');
   playerList.innerHTML = '';
 
-  players.forEach((player, index) => {
+  players.forEach(player => {
     const playerBtn = document.createElement('button');
     playerBtn.className = 'player-btn';
     playerBtn.innerText = player;
 
-    // Lisää poistotoiminto painikkeeseen
+    // Poistotoiminto: klikkaamalla poistetaan pelaaja
     playerBtn.onclick = () => {
       if (confirm(`Remove player "${player}"?`)) {
-        players.splice(index, 1);
+        players = players.filter(p => p !== player);
         updatePlayerList();
       }
     };
