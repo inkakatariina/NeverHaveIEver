@@ -24,6 +24,10 @@
 
     <p id="question">Never have I ever... gone skydiving</p>
 
+        <h3>Others' answers:</h3>
+        <ul id="answers"></ul>
+
+
     <div class="answer-buttons">
       <button onclick="submitAnswer('I have')">I have</button>
       <button onclick="submitAnswer('I have not')">I have not</button>
@@ -88,6 +92,21 @@
 
       alert(`Answer submitted: ${answer}`);
     }
+
+    // Päivitä vastauslistaus reaaliajassa
+firebase.database().ref(`games/${gameId}/answers`).on('value', (snapshot) => {
+  const answers = snapshot.val();
+  const answerList = document.getElementById('answers');
+  answerList.innerHTML = ''; // tyhjennä edellinen sisältö
+
+  for (let key in answers) {
+    const entry = answers[key];
+    const li = document.createElement('li');
+    li.innerText = `${entry.player}: ${entry.answer}`;
+    answerList.appendChild(li);
+  }
+});
+
   </script>
 
 </body>
