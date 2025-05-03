@@ -8,48 +8,87 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <div class="screen">
-        <h1>Welcome to the game!</h1>
-        <p id="playerInfo">Player: Inka</p>
-        <p id="gameIdInfo">Game ID: 1234</p>
 
-        <div class="answer-buttons">
-        <button id="have">I have</button>
-        <button id="have-not">I have not</button>
-        </div>
+  <!-- Nimen syöttönäkymä -->
+  <div id="name-screen" class="screen">
+    <h2>Enter your name</h2>
+    <input type="text" id="playerNameInput" placeholder="Your name" />
+    <button onclick="submitName()">Join Game</button>
+  </div>
+  
+  <!-- Varsinainen pelinäkymä -->
+  <div id="game-screen" class="screen hidden">
+    <h1>Welcome to the game!</h1>
+    <p id="playerInfo">Player:</p>
+    <p id="gameIdInfo">Game ID:</p>
+
+    <p id="question">Never have I ever... gone skydiving</p>
+
+    <div class="answer-buttons">
+      <button onclick="submitAnswer('I have')">I have</button>
+      <button onclick="submitAnswer('I have not')">I have not</button>
     </div>
+  </div>
 
+  <!-- Firebase-kirjastot -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <script>
-    // Hae URL-parametrit
+    // 🔧 Korvaa nämä omilla Firebase-arvoillasi!
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+  </script>
+
+  <!-- Päälogiikka -->
+  <script>
     const urlParams = new URLSearchParams(window.location.search);
-    const playerName = urlParams.get('player');
-    const gameId = urlParams.get('game');
+    const gameId = urlParams.get('game') || 'Unknown';
 
-    document.getElementById('greeting').innerText = `Hi ${playerName}!`;
+    let playerName = '';
 
-    // (Tässä esimerkissä kysymys on kiinteä)
-    document.getElementById('question').innerText = "Never have I ever... gone skydiving";
+    // Kun nimi syötetään
+    function submitName() {
+      const nameInput = document.getElementById('playerNameInput');
+      playerName = nameInput.value.trim();
 
+      if (playerName === '') {
+        alert("Please enter your name");
+        return;
+      }
+
+      // Näytä pelinäkymä, piilota nimi-näkymä
+      document.getElementById('name-screen').classList.add('hidden');
+      document.getElementById('game-screen').classList.remove('hidden');
+
+      // Päivitä näkyvä teksti
+      document.getElementById('playerInfo').innerText = `Player: ${playerName}`;
+      document.getElementById('gameIdInfo').innerText = `Game ID: ${gameId}`;
+    }
+
+    // Kun pelaaja vastaa
     function submitAnswer(answer) {
-      alert(`Answer from ${playerName} (${gameId}): ${answer}`);
-      // Tässä voit lisätä koodin, joka esim. lähettää vastauksen Google Sheetiin
-    }
+      if (!playerName || !gameId) {
+        alert("Missing player name or game ID.");
+        return;
+      }
 
+      firebase.database().ref(`games/${gameId}/answers`).push({
+        player: playerName,
+        answer: answer,
+        timestamp: Date.now()
+      });
+
+      alert(`Answer submitted: ${answer}`);
+    }
   </script>
 
-<script>
-    function getParams() {
-      const params = new URLSearchParams(window.location.search);
-      return {
-        player: params.get('player'),
-        game: params.get('game')
-      };
-    }
-  
-    const { player, game } = getParams();
-    const gameInfo = document.getElementById('game-info');
-    gameInfo.innerText = `Player: ${player}, Game ID: ${game}`;
-  </script>
-  
 </body>
 </html>
