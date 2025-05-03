@@ -14,7 +14,7 @@
     <input type="text" id="playerNameInput" placeholder="Your name" />
     <button onclick="submitName()">Join Game</button>
   </div>
-  
+
   <!-- Varsinainen pelinäkymä -->
   <div id="game-screen" class="screen hidden">
     <h1>Welcome to the game!</h1>
@@ -49,86 +49,94 @@
     firebase.initializeApp(firebaseConfig);
   </script>
 
-  <!-- Päälogiikka -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
   <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const gameId = urlParams.get('game') || 'Unknown';
-    let playerName = '';
-    let hasAnswered = false;
-    let selectedGameMode = '';
-    let currentQuestion = '';
+    let players = [];
+    let screenHistory = [];
+    let selectedModes = [];
+    let currentQuestionIndex = 0;
+    let questions = [];
+    let flow = null; // 'getStarted' or 'shareGame'
 
-    // Lataa pelimuoto ja kysymykset
-    fetch('data.json')
-      .then(response => {
-        if (!response.ok) throw new Error("data.json not found");
-        return response.json();
-      })
-      .then(data => {
-        selectedGameMode = data.selectedGameMode || 'default';
-        const h1 = document.querySelector("#game-screen h1");
-        if (h1) h1.innerText += ` (${selectedGameMode})`;
-
-        const questions = data.questions?.[selectedGameMode];
-        if (!questions || questions.length === 0) {
-          document.getElementById('question').innerText = "No questions found for this mode.";
-        } else {
-          // Satunnainen kysymys
-          const randomIndex = Math.floor(Math.random() * questions.length);
-          currentQuestion = questions[randomIndex];
-          document.getElementById('question').innerText = currentQuestion;
-        }
-      })
-      .catch(error => {
-        console.error("Error loading game mode:", error);
-        document.getElementById('question').innerText = "Error loading question.";
-      });
+    function showScreen(id) {
+      const currentVisible = document.querySelector('.screen:not(.hidden)');
+      if (currentVisible) screenHistory.push(currentVisible.id);
+      document.querySelectorAll('.screen').forEach(screen => screen.classList.add('hidden'));
+      document.getElementById(id).classList.remove('hidden');
+    }
 
     function submitName() {
-      const nameInput = document.getElementById('playerNameInput');
-      playerName = nameInput.value.trim();
-      if (playerName === '') {
-        alert("Please enter your name");
+      const playerName = document.getElementById('playerNameInput').value.trim();
+      if (!playerName) {
+        alert('Please enter your name.');
         return;
       }
 
-      document.getElementById('name-screen').classList.add('hidden');
-      document.getElementById('game-screen').classList.remove('hidden');
       document.getElementById('playerInfo').innerText = `Player: ${playerName}`;
-      document.getElementById('gameIdInfo').innerText = `Game ID: ${gameId}`;
+      showScreen('game-screen');
+
+      selectedModes = getModesFromURL();
+      if (selectedModes.length === 0) selectedModes = ['general'];
+
+      fetchQuestions();
+    }
+
+    function getModesFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      const modes = [];
+      for (const [key, value] of params.entries()) {
+        if (key === 'mode') modes.push(value);
+      }
+      return modes;
+    }
+
+    function fetchQuestions() {
+      fetch('data.json')
+        .then(response => response.json())
+        .then(data => {
+          questions = selectedModes.flatMap(mode => data[mode] || []);
+          shuffleArray(questions);
+          showQuestion();
+        })
+        .catch(error => console.error('Error loading questions:', error));
+    }
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    function showQuestion() {
+      if (currentQuestionIndex < questions.length) {
+        document.getElementById('question').innerText = questions[currentQuestionIndex];
+      } else {
+        document.getElementById('question').innerText = 'No more questions!';
+      }
+    }
+
+    function nextQuestion() {
+      currentQuestionIndex++;
+      showQuestion();
     }
 
     function submitAnswer(answer) {
-      if (!playerName || !gameId) {
-        alert("Missing player name or game ID.");
-        return;
-      }
-
-      if (hasAnswered) return;
-      hasAnswered = true;
-
-      firebase.database().ref(`games/${gameId}/answers`).push({
-        player: playerName,
-        answer: answer,
-        question: currentQuestion,
-        timestamp: Date.now()
-      });
-
+      const list = document.getElementById('answers');
+      const li = document.createElement('li');
+      li.textContent = answer;
+      list.appendChild(li);
       document.getElementById('answers-section').classList.remove('hidden');
+    }
 
-      firebase.database().ref(`games/${gameId}/answers`).on('value', (snapshot) => {
-        const answers = snapshot.val();
-        const answerList = document.getElementById('answers');
-        answerList.innerHTML = '';
-        for (let key in answers) {
-          const entry = answers[key];
-          const li = document.createElement('li');
-          li.innerText = `${entry.player}: ${entry.answer}`;
-          answerList.appendChild(li);
-        }
+    function generateQR() {
+      const gameId = Math.random().toString(36).substring(2, 8);
+      const params = selectedModes.map(mode => `mode=${encodeURIComponent(mode)}`).join('&');
+      const url = `https://inkakatariina.github.io/NeverHaveIEver/game.html?game=${gameId}&${params}`;
+      QRCode.toCanvas(document.getElementById('qrcode'), url, error => {
+        if (error) console.error(error);
+        document.getElementById('qr-url').innerText = url;
       });
-
-      document.querySelector('.answer-buttons').classList.add('hidden');
     }
   </script>
 
