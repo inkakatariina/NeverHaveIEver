@@ -229,7 +229,7 @@
   function generateQR() {
   const playerName = "Inka"; // Voit myöhemmin ottaa syötteenä
   const gameId = "1234"; // Voit tehdä myös satunnaisen
-  const url = `https://sinunsivusi.fi/game.html?game=${gameId}&player=${encodeURIComponent(playerName)}`;
+  const url = `https://inkakatariina.github.io/NeverHaveIEver/game.html?game=${gameId}&player=${encodeURIComponent(playerName)}`;
   
   QRCode.toCanvas(document.getElementById('qrcode'), url, function (error) {
     if (error) console.error(error);
