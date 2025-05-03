@@ -92,6 +92,7 @@
     <button onclick="nextQuestion()">Next Question</button>
   </div>
 
+  <!-- JavaScript -->
   <script>
     let players = [];
     let screenHistory = [];
@@ -99,49 +100,30 @@
     let currentQuestionIndex = 0;
     let questions = [];
 
-    // Funktio näyttämään ruudut
     function showScreen(id) {
       const currentVisible = document.querySelector('.screen:not(.hidden)');
       if (currentVisible) {
         screenHistory.push(currentVisible.id);
       }
 
-      document.querySelectorAll('.screen').forEach(screen => {
-        screen.classList.add('hidden');
-      });
-
+      document.querySelectorAll('.screen').forEach(screen => screen.classList.add('hidden'));
       document.getElementById(id).classList.remove('hidden');
 
-      const backButton = document.querySelector('.back-button');
-      if (screenHistory.length > 0) {
-        backButton.classList.remove('hidden');
-      } else {
-        backButton.classList.add('hidden');
-      }
+      document.querySelector('.back-button').classList.toggle('hidden', screenHistory.length === 0);
     }
 
     function goBack() {
       if (screenHistory.length > 0) {
         const previousScreen = screenHistory.pop();
-        document.querySelectorAll('.screen').forEach(screen => {
-          screen.classList.add('hidden');
-        });
+        document.querySelectorAll('.screen').forEach(screen => screen.classList.add('hidden'));
         document.getElementById(previousScreen).classList.remove('hidden');
-
-        const backButton = document.querySelector('.back-button');
-        if (screenHistory.length > 0) {
-          backButton.classList.remove('hidden');
-        } else {
-          backButton.classList.add('hidden');
-        }
+        document.querySelector('.back-button').classList.toggle('hidden', screenHistory.length === 0);
       }
     }
 
-    // Funktio pelaajan lisäämiseen
     function addPlayer() {
       const playerNameInput = document.getElementById('player-name-input');
       const playerName = playerNameInput.value.trim();
-
       if (playerName) {
         players.push(playerName);
         updatePlayerList();
@@ -152,29 +134,30 @@
     }
 
     function updatePlayerList() {
-  const playerList = document.getElementById('player-list');
-  playerList.innerHTML = '';
+      const playerList = document.getElementById('player-list');
+      playerList.innerHTML = '';
 
-  players.forEach((player, index) => {
-    const playerBtn = document.createElement('button');
-    playerBtn.className = 'player-btn';
-    playerBtn.innerText = player;
+      players.forEach((player, index) => {
+        const playerItem = document.createElement('div');
+        playerItem.className = 'player-item';
 
-    // Pelaajan poistaminen toimii indexin avulla (ei vain nimen)
-    playerBtn.onclick = () => {
-      if (confirm(`Remove player "${player}"?`)) {
-        players.splice(index, 1);  // Poistaa juuri tämän pelaajan
-        updatePlayerList();        // Päivittää listan
-      }
-    };
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = player;
 
-    playerList.appendChild(playerBtn);
-  });
-}
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'remove-btn';
+        removeBtn.textContent = 'X';
+        removeBtn.onclick = () => {
+          players.splice(index, 1);
+          updatePlayerList();
+        };
 
+        playerItem.appendChild(nameSpan);
+        playerItem.appendChild(removeBtn);
+        playerList.appendChild(playerItem);
+      });
+    }
 
-
-    // Funktio pelitilan valitsemiseen ja kysymysten lataamiseen
     function startGame() {
       selectedModes = [];
       document.querySelectorAll('input[name="mode"]:checked').forEach(checkbox => {
@@ -189,21 +172,16 @@
       }
     }
 
-    // Funktio kysymysten hakemiseen JSON-tiedostosta
     function fetchQuestions() {
       fetch('data.json')
         .then(response => response.json())
         .then(data => {
           questions = [];
-
-          // Hakee kysymykset valituilta pelitiloilta
           selectedModes.forEach(mode => {
             if (data[mode]) {
               questions = questions.concat(data[mode]);
             }
           });
-
-          // Näytetään ensimmäinen kysymys
           showQuestion();
         })
         .catch(error => {
@@ -211,7 +189,6 @@
         });
     }
 
-    // Funktio kysymyksen näyttämiseen
     function showQuestion() {
       if (currentQuestionIndex < questions.length) {
         document.getElementById('game-question').innerText = questions[currentQuestionIndex];
@@ -220,12 +197,12 @@
       }
     }
 
-    // Funktio seuraavan kysymyksen näyttämiseen
     function nextQuestion() {
       currentQuestionIndex++;
       showQuestion();
     }
   </script>
+
 
 
 </body>
