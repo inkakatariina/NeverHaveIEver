@@ -221,7 +221,7 @@
   const playerName = "Inka";  // Tämä voisi tulla input-kentästä
   const gameId = "1234";      // Voit generoida satunnaisesti
 
-  const url = `https://sinunsivusi.fi/game.html?game=${gameId}&player=${playerName}`;
+  const url = `https://inkakatariina.github.io/NeverHaveIEver/game.html?game=${gameId}&player=${encodeURIComponent(playerName)}`;
   QRCode.toCanvas(document.getElementById('qrcode'), url, function (error) {
     if (error) console.error(error);
   });
