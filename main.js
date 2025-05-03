@@ -68,3 +68,25 @@ function showQuestion() {
     alert('The game has ended!');  // Pelin loppu
   }
 }
+
+function updatePlayerList() {
+    const playerList = document.getElementById('player-list');
+    playerList.innerHTML = '';
+  
+    players.forEach((player, index) => {
+      const playerBtn = document.createElement('button');
+      playerBtn.className = 'player-btn';
+      playerBtn.innerText = player;
+  
+      // Lisää poistotoiminto painikkeeseen
+      playerBtn.onclick = () => {
+        if (confirm(`Remove player "${player}"?`)) {
+          players.splice(index, 1);
+          updatePlayerList();
+        }
+      };
+  
+      playerList.appendChild(playerBtn);
+    });
+  }
+  
