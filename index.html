@@ -97,6 +97,27 @@
     <button onclick="showScreen('welcome-screen')">Back to Welcome</button>
   </div>
 
+  <!-- Jaa peli - valitse pelimoodi -->
+<div class="screen hidden" id="share-setup">
+  <h2>Choose game mode to share</h2>
+  <p>Select one or more game modes before sharing:</p>
+  <div class="mode-selection">
+    <label class="mode-option"><input type="checkbox" name="share-mode" value="workAndSchool" hidden><span>Work & School</span></label>
+    <label class="mode-option"><input type="checkbox" name="share-mode" value="embarrassingMoments" hidden><span>Embarrassing & Awkward Moments</span></label>
+    <label class="mode-option"><input type="checkbox" name="share-mode" value="travelAdventure" hidden><span>Travel & Adventure</span></label>
+    <label class="mode-option"><input type="checkbox" name="share-mode" value="relationshipDating" hidden><span>Relationship & Dating</span></label>
+    <label class="mode-option"><input type="checkbox" name="share-mode" value="partyFun" hidden><span>Party & Fun</span></label>
+    <label class="mode-option"><input type="checkbox" name="share-mode" value="moneyShopping" hidden><span>Money & Shopping</span></label>
+    <label class="mode-option"><input type="checkbox" name="share-mode" value="girlsNight" hidden><span>Girls' Night</span></label>
+    <label class="mode-option"><input type="checkbox" name="share-mode" value="all" hidden><span>All (includes all categories)</span></label>
+  </div>
+  <br>
+  <button onclick="confirmShareModes()">Generate QR Code</button>
+  <button onclick="showScreen('share-setup')">Share Game</button>
+
+</div>
+
+
   <!-- Pelin kysymykset -->
   <div class="screen hidden" id="game-screen">
     <h2 id="game-mode-title">Game Question</h2>
@@ -229,7 +250,8 @@
   function generateQR() {
   const playerName = "Inka"; // Voit myöhemmin ottaa syötteenä
   const gameId = "1234"; // Voit tehdä myös satunnaisen
-  const url = `https://inkakatariina.github.io/NeverHaveIEver/game.html?game=${gameId}&player=${encodeURIComponent(playerName)}`;
+  const selectedModeParams = selectedModes.map(mode => `mode=${encodeURIComponent(mode)}`).join('&');
+  const url = `https://inkakatariina.github.io/NeverHaveIEver/game.html?game=${gameId}&player=${encodeURIComponent(playerName)}&${selectedModeParams}`;
   
   QRCode.toCanvas(document.getElementById('qrcode'), url, function (error) {
     if (error) console.error(error);
@@ -238,6 +260,21 @@
   document.getElementById('qr-url').innerText = url;
   showScreen('qr-section');
 }
+
+function confirmShareModes() {
+  selectedModes = [];
+  document.querySelectorAll('input[name="share-mode"]:checked').forEach(checkbox => {
+    selectedModes.push(checkbox.value);
+  });
+
+  if (selectedModes.length === 0) {
+    alert("Please select at least one mode to share.");
+    return;
+  }
+
+  generateQR();
+}
+
 
 </script>
 
