@@ -155,22 +155,23 @@
   const playerList = document.getElementById('player-list');
   playerList.innerHTML = '';
 
-  players.forEach(player => {
+  players.forEach((player, index) => {
     const playerBtn = document.createElement('button');
     playerBtn.className = 'player-btn';
     playerBtn.innerText = player;
 
-    // Poistotoiminto: klikkaamalla poistetaan pelaaja
+    // Pelaajan poistaminen toimii indexin avulla (ei vain nimen)
     playerBtn.onclick = () => {
       if (confirm(`Remove player "${player}"?`)) {
-        players = players.filter(p => p !== player);
-        updatePlayerList();
+        players.splice(index, 1);  // Poistaa juuri tämän pelaajan
+        updatePlayerList();        // Päivittää listan
       }
     };
 
     playerList.appendChild(playerBtn);
   });
 }
+
 
 
     // Funktio pelitilan valitsemiseen ja kysymysten lataamiseen
