@@ -181,3 +181,9 @@ input[type="text"]:focus {
   box-sizing: border-box;
   overflow-wrap: break-word;
 }
+
+.visually-hidden {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}

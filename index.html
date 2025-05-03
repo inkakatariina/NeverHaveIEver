@@ -51,6 +51,7 @@
   </div>
 
   <!-- Mahdollinen seuraava näyttö (placeholder) -->
+  <!-- tää nyt koskee peliä, jossa ei jaeta peliä eri näytöille -->
   <div class="screen hidden" id="choose-game">
     <h2>Choose game mode</h2>
 <p>Select one or more game modes:</p>
@@ -98,19 +99,54 @@
   </div>
 
   <!-- Jaa peli - valitse pelimoodi -->
+  <!-- tää koskee pelin valintaa jos on valinnut share game toiminnon -->
 <div class="screen hidden" id="share-setup">
   <h2>Choose game mode to share</h2>
   <p>Select one or more game modes before sharing:</p>
-  <div class="mode-selection">
-    <label class="mode-option"><input type="checkbox" name="share-mode" value="workAndSchool" hidden><span>Work & School</span></label>
-    <label class="mode-option"><input type="checkbox" name="share-mode" value="embarrassingMoments" hidden><span>Embarrassing & Awkward Moments</span></label>
-    <label class="mode-option"><input type="checkbox" name="share-mode" value="travelAdventure" hidden><span>Travel & Adventure</span></label>
-    <label class="mode-option"><input type="checkbox" name="share-mode" value="relationshipDating" hidden><span>Relationship & Dating</span></label>
-    <label class="mode-option"><input type="checkbox" name="share-mode" value="partyFun" hidden><span>Party & Fun</span></label>
-    <label class="mode-option"><input type="checkbox" name="share-mode" value="moneyShopping" hidden><span>Money & Shopping</span></label>
-    <label class="mode-option"><input type="checkbox" name="share-mode" value="girlsNight" hidden><span>Girls' Night</span></label>
-    <label class="mode-option"><input type="checkbox" name="share-mode" value="all" hidden><span>All (includes all categories)</span></label>
-  </div>
+  <fieldset class="mode-selection">
+    <legend>Select one or more game modes before sharing:</legend>
+  
+    <label class="mode-option">
+      <input type="checkbox" name="share-mode" value="workAndSchool">
+      <span>Work & School</span>
+    </label>
+  
+    <label class="mode-option">
+      <input type="checkbox" name="share-mode" value="embarrassingMoments">
+      <span>Embarrassing & Awkward Moments</span>
+    </label>
+  
+    <label class="mode-option">
+      <input type="checkbox" name="share-mode" value="travelAdventure">
+      <span>Travel & Adventure</span>
+    </label>
+  
+    <label class="mode-option">
+      <input type="checkbox" name="share-mode" value="relationshipDating">
+      <span>Relationship & Dating</span>
+    </label>
+  
+    <label class="mode-option">
+      <input type="checkbox" name="share-mode" value="partyFun">
+      <span>Party & Fun</span>
+    </label>
+  
+    <label class="mode-option">
+      <input type="checkbox" name="share-mode" value="moneyShopping">
+      <span>Money & Shopping</span>
+    </label>
+  
+    <label class="mode-option">
+      <input type="checkbox" name="share-mode" value="girlsNight">
+      <span>Girls' Night</span>
+    </label>
+  
+    <label class="mode-option">
+      <input type="checkbox" name="share-mode" value="all">
+      <span>All (includes all categories)</span>
+    </label>
+  </fieldset>
+  
   <br>
   <button onclick="confirmShareModes()">Generate QR Code</button>
   <button onclick="showScreen('share-setup')">Share Game</button>
