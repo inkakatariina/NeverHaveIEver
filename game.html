@@ -4,89 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Never Have I Ever</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 20px;
-      background-color: #f5f5f5;
-    }
-    .screen {
-      max-width: 600px;
-      margin: 0 auto;
-      background-color: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    .hidden {
-      display: none;
-    }
-    input[type="text"] {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-    }
-    button {
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      padding: 10px 15px;
-      border-radius: 5px;
-      cursor: pointer;
-      margin: 5px 0;
-    }
-    button:hover {
-      background-color: #45a049;
-    }
-    button:disabled {
-      background-color: #cccccc;
-      cursor: not-allowed;
-    }
-    .answer-buttons {
-      display: flex;
-      gap: 10px;
-      margin: 20px 0;
-    }
-    #answer-yes {
-      background-color: #4CAF50;
-    }
-    #answer-no {
-      background-color: #f44336;
-    }
-    .player-list {
-      list-style-type: none;
-      padding: 0;
-    }
-    .player-list li {
-      padding: 5px;
-      margin: 2px 0;
-      background-color: #f1f1f1;
-      border-radius: 3px;
-    }
-    .game-info {
-      display: flex;
-      flex-direction: column;
-      margin-bottom: 20px;
-    }
-    .game-info p {
-      margin: 5px 0;
-    }
-    #current-question {
-      font-size: 1.2em;
-      font-weight: bold;
-      margin: 20px 0;
-      padding: 15px;
-      background-color: #e9f5e9;
-      border-radius: 5px;
-    }
-    .waiting-message {
-      color: #666;
-      font-style: italic;
-    }
-  </style>
 </head>
 <body>
   <!-- Name input screen -->
@@ -136,8 +53,36 @@
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+ 
 
   <script>
+
+// kokeiluja uudesta tavasta
+const socket = new WebSocket("ws://localhost:8080");
+
+socket.addEventListener("open", () => {
+  console.log("Yhdistetty WebSocket-palvelimeen.");
+});
+
+socket.addEventListener("message", (event) => {
+  console.log("Vastaanotettu viesti:", event.data);
+  // TODO: näytä muille vastaus ruudulla
+});
+
+function sendAnswer(answer) {
+  socket.send(answer);
+}
+
+document.querySelector("#yesBtn").addEventListener("click", () => {
+  sendAnswer("KYLLÄ");
+});
+
+document.querySelector("#noBtn").addEventListener("click", () => {
+  sendAnswer("EI");
+});
+
+
     // Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyB_ZHKotLJyqdGNjQ9anUcMZwkFk_JFfuU",
@@ -758,6 +703,48 @@
         }
       });
     });
+
+    // tää piti kans lisää t chtagpt
+    function sendAnswer(answer) {
+  const message = {
+    type: 'answer',
+    answer: answer,
+    playerId: myPlayerId
+  };
+  sendMessage(message);
+}
+
+function showQuestion(questionText) {
+  document.getElementById("question-container").innerText = questionText;
+}
+
+function handleOtherPlayerAnswer(data) {
+  console.log(`Pelaaja ${data.playerId} vastasi: ${data.answer}`);
+}
+
   </script>
+
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script>
+  const socket = io("https://65a4-217-140-201-101.ngrok-free.app");
+
+  socket.on("connect", () => {
+    console.log("Yhdistetty palvelimeen");
+  });
+
+  socket.on("newQuestion", (question) => {
+    // näytä uusi kysymys pelaajalle
+    document.getElementById("question").innerText = question;
+  });
+
+  function sendAnswer(answer) {
+    socket.emit("answer", answer);
+  }
+</script>
+
+<div id="question">Ladataan kysymystä...</div>
+<button onclick="sendAnswer('yes')">Kyllä</button>
+<button onclick="sendAnswer('no')">Ei</button>
+
 </body>
 </html>
