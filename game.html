@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Never Have I Ever</title>
+  <link rel="stylesheet" href="style.css" />
+  
 </head>
 <body>
   <!-- Name input screen -->
@@ -11,8 +13,8 @@
     <h2>Enter your name to join the game</h2>
     <input type="text" id="playerNameInput" placeholder="Your name" />
     <button id="submitNameBtn">Join Game</button>
-    <p id="loading-message" class="hidden waiting-message">Connecting to game...</p>
-    <p id="error-message" class="hidden" style="color: red;"></p>
+    <div id="loading-message" class="hidden waiting-message">Connecting to game...</div>
+    <div id="error-message" class="hidden error"></div>
   </div>
 
   <!-- Game screen -->
@@ -32,6 +34,7 @@
     </div>
 
     <div id="question-area" class="hidden">
+      <h3>Current Question:</h3>
       <p id="current-question">Loading question...</p>
 
       <div class="answer-buttons">
@@ -39,7 +42,7 @@
         <button id="answer-no">I have not</button>
       </div>
 
-      <div id="answers-section" class="hidden">
+      <div id="answers-section">
         <h3>Player Responses:</h3>
         <ul id="answers-list"></ul>
       </div>
@@ -48,68 +51,21 @@
         <button id="next-question-btn">Next Question</button>
       </div>
     </div>
+    
+    <div id="notification" class="notification hidden"></div>
   </div>
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
- 
+  <!-- Socket.IO script -->
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
   <script>
-
-// kokeiluja uudesta tavasta
-const socket = new WebSocket("ws://localhost:8080");
-
-socket.addEventListener("open", () => {
-  console.log("Yhdistetty WebSocket-palvelimeen.");
-});
-
-socket.addEventListener("message", (event) => {
-  console.log("Vastaanotettu viesti:", event.data);
-  // TODO: näytä muille vastaus ruudulla
-});
-
-function sendAnswer(answer) {
-  socket.send(answer);
-}
-
-document.querySelector("#yesBtn").addEventListener("click", () => {
-  sendAnswer("KYLLÄ");
-});
-
-document.querySelector("#noBtn").addEventListener("click", () => {
-  sendAnswer("EI");
-});
-
-
-    // Firebase configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyB_ZHKotLJyqdGNjQ9anUcMZwkFk_JFfuU",
-      authDomain: "never-have-i-ever-9bd43.firebaseapp.com",
-      projectId: "never-have-i-ever-9bd43",
-      storageBucket: "never-have-i-ever-9bd43.appspot.com",
-      messagingSenderId: "446411576915",
-      appId: "1:446411576915:web:499e1058643d295785d8a6",
-      measurementId: "G-Y45EG0CKL0",
-      databaseURL: "https://never-have-i-ever-9bd43-default-rtdb.firebaseio.com"
-    };
-
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
-
     // Game variables
     let playerName = '';
     let gameId = '';
     let playerId = '';
     let isHost = false;
-    let questions = [];
-    let currentQuestionIndex = 0;
     let hasAnswered = false;
-    let playerRef = null;
-    let gameRef = null;
-    let gameModes = [];
+    let socket = null;
 
     // DOM Elements
     const nameScreen = document.getElementById('name-screen');
@@ -129,6 +85,7 @@ document.querySelector("#noBtn").addEventListener("click", () => {
     const answersList = document.getElementById('answers-list');
     const loadingMessage = document.getElementById('loading-message');
     const errorMessage = document.getElementById('error-message');
+    const notification = document.getElementById('notification');
 
     // Get URL parameters
     function getUrlParams() {
@@ -151,501 +108,15 @@ document.querySelector("#noBtn").addEventListener("click", () => {
       }
     }
 
-    // Load questions based on selected game modes
-    function loadQuestions(modes = ['general']) {
-      console.log('Loading questions for modes:', modes);
+    // Show notification
+    function showNotification(message, type = 'success') {
+      notification.textContent = message;
+      notification.className = `notification ${type}`;
+      notification.classList.remove('hidden');
       
-      return fetch('./data.json')
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`Failed to load data.json (${response.status} ${response.statusText})`);
-          }
-          return response.json();
-        })
-        .then(data => {
-          // Normalize mode names to match data.json keys
-          const normalizedModes = modes.map(mode => {
-            // Map mode names from URL to match data.json keys
-            const modeMap = {
-              'workAndSchool': 'workAndSchool',
-              'embarrassing': 'embarrassingMoments',
-              'travel': 'travelAdventure',
-              'relationship': 'relationshipDating',
-              'party': 'partyFun',
-              'money': 'moneyShopping',
-              'girlsNight': 'girlsNight',
-              'all': 'all'
-            };
-            
-            return modeMap[mode] || mode.toLowerCase().replace(/\s+/g, '');
-          });
-
-          console.log('Normalized modes:', normalizedModes);
-          
-          // Collect questions from all selected modes
-          let allQuestions = [];
-          normalizedModes.forEach(mode => {
-            if (data[mode] && Array.isArray(data[mode])) {
-              allQuestions = allQuestions.concat(data[mode]);
-              console.log(`Added ${data[mode].length} questions from mode: ${mode}`);
-            } else {
-              console.warn(`Mode "${mode}" not found in data or not an array`);
-            }
-          });
-          
-          if (allQuestions.length === 0) {
-            // If no valid modes, fallback to using general questions
-            console.log('No valid modes, using general questions');
-            allQuestions = [
-              "Never have I ever traveled outside the country",
-              "Never have I ever broken a bone",
-              "Never have I ever gone skydiving",
-              "Never have I ever eaten sushi",
-              "Never have I ever been to a concert",
-              "Never have I ever cheated on a test",
-              "Never have I ever had a nickname I hated",
-              "Never have I ever stayed up all night",
-              "Never have I ever pretended to be sick to avoid something",
-              "Never have I ever sent a text to the wrong person"
-            ];
-          }
-          
-          console.log(`Total questions loaded: ${allQuestions.length}`);
-          
-          // Shuffle questions
-          return shuffleArray(allQuestions);
-        })
-        .catch(error => {
-          console.error('Error loading questions:', error);
-          // Provide fallback questions if data.json fails to load
-          return [
-            "Never have I ever traveled outside the country",
-            "Never have I ever broken a bone",
-            "Never have I ever gone skydiving",
-            "Never have I ever eaten sushi",
-            "Never have I ever been to a concert",
-            "Never have I ever cheated on a test",
-            "Never have I ever had a nickname I hated",
-            "Never have I ever stayed up all night",
-            "Never have I ever pretended to be sick to avoid something",
-            "Never have I ever sent a text to the wrong person"
-          ];
-        });
-    }
-
-    // Shuffle array using Fisher-Yates algorithm
-    function shuffleArray(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
-      return array;
-    }
-
-    // Initialize a new game or join existing one
-    function initializeGame() {
-      // Reset error message
-      errorMessage.textContent = '';
-      errorMessage.classList.add('hidden');
-      
-      const { gameId: urlGameId, modes } = getUrlParams();
-      gameModes = modes || ['general'];
-      
-      if (urlGameId) {
-        // Join existing game
-        gameId = urlGameId;
-        
-        // Check if game exists
-        console.log("Checking if game exists:", gameId);
-        database.ref(`games/${gameId}`).once('value')
-          .then(snapshot => {
-            if (!snapshot.exists()) {
-              throw new Error("Game not found");
-            }
-            console.log("Game found, joining as regular player");
-            isHost = false;
-            joinGame(playerName, gameId);
-          })
-          .catch(error => {
-            console.error('Error checking game existence:', error);
-            showError("Failed to connect to game. Please check your connection and try again.");
-          });
-      } else {
-        // Create new game as host (no gameId in URL)
-        gameId = generateGameId();
-        isHost = true;
-        
-        // Load questions and create game in database
-        loadQuestions(gameModes)
-          .then(loadedQuestions => {
-            questions = loadedQuestions;
-            createNewGame(playerName, gameId, questions, gameModes);
-          })
-          .catch(error => {
-            console.error('Error loading questions:', error);
-            showError("Failed to load game questions. Please try again.");
-          });
-      }
-    }
-
-    // Create a new game in the database
-    function createNewGame(playerName, gameId, questions, modes) {
-      console.log("Creating new game:", gameId);
-      gameRef = database.ref(`games/${gameId}`);
-      
-      // Create a simple game structure first
-      const gameData = {
-        hostName: playerName,
-        status: 'waiting',
-        currentQuestionIndex: 0,
-        createdAt: firebase.database.ServerValue.TIMESTAMP
-      };
-      
-      // Set up initial game state
-      gameRef.set(gameData)
-        .then(() => {
-          console.log("Game created successfully");
-          
-          // Add questions separately in chunks to avoid size limits
-          const questionsData = {};
-          questions.forEach((q, index) => {
-            questionsData[index] = q;
-          });
-          
-          return gameRef.child('questions').set(questionsData);
-        })
-        .then(() => {
-          console.log("Questions added");
-          
-          // Add modes
-          return gameRef.child('modes').set(modes || ['general']);
-        })
-        .then(() => {
-          console.log("Modes added");
-          
-          // Add host as a player
-          playerId = Date.now().toString(36) + Math.random().toString(36).substring(2);
-          return gameRef.child('players').child(playerId).set({
-            name: playerName,
-            isHost: true,
-            joinedAt: firebase.database.ServerValue.TIMESTAMP
-          });
-        })
-        .then(() => {
-          console.log("Host player added");
-          // Set up listeners
-          setupGameListeners();
-          
-          // Show host controls
-          hostControls.classList.remove('hidden');
-          
-          // Add a start game button for the host if it doesn't exist yet
-          if (!document.getElementById('start-game-btn')) {
-            const startGameBtn = document.createElement('button');
-            startGameBtn.id = 'start-game-btn';
-            startGameBtn.textContent = 'Start Game';
-            startGameBtn.addEventListener('click', startGame);
-            hostControls.prepend(startGameBtn);
-          }
-        })
-        .catch(err => {
-          console.error("Failed to set up game:", err);
-          showError("Failed to create game. Please try again.");
-        });
-    }
-
-    // Join an existing game
-    function joinGame(playerName, gameId) {
-      console.log("Joining game:", gameId);
-      gameRef = database.ref(`games/${gameId}`);
-      
-      // Generate player ID and add to game
-      playerId = Date.now().toString(36) + Math.random().toString(36).substring(2);
-      console.log("Player ID:", playerId);
-      
-      // Add player to game
-      gameRef.child('players').child(playerId).set({
-        name: playerName,
-        isHost: false,
-        joinedAt: firebase.database.ServerValue.TIMESTAMP
-      })
-      .then(() => {
-        console.log("Player added to game");
-        // Set up listeners
-        setupGameListeners();
-      })
-      .catch(error => {
-        console.error('Error joining game:', error);
-        showError("Failed to join game. The game may no longer exist or there might be connection issues.");
-      });
-    }
-
-    // Set up all Firebase listeners
-    function setupGameListeners() {
-      console.log("Setting up Firebase listeners");
-      
-      // Listen for game state changes
-      gameRef.on('value', snapshot => {
-        console.log("Game state changed");
-        const gameData = snapshot.val();
-        if (!gameData) {
-          console.log("No game data available");
-          showError("Game data not found. The game may have been deleted.");
-          return;
-        }
-        
-        // Update game info display
-        playerNameDisplay.textContent = playerName;
-        gameIdDisplay.textContent = gameId;
-        
-        // Check game status
-        if (gameData.status === 'playing') {
-          console.log("Game is in playing state");
-          waitingArea.classList.add('hidden');
-          questionArea.classList.remove('hidden');
-          
-          // Update current question
-          currentQuestionIndex = gameData.currentQuestionIndex || 0;
-          
-          // Get current question text from the questions object
-          let currentQuestionText = "Loading question...";
-          if (gameData.questions && gameData.questions[currentQuestionIndex]) {
-            currentQuestionText = gameData.questions[currentQuestionIndex];
-          }
-          currentQuestionElement.textContent = currentQuestionText;
-          
-          // Reset answer state for new question
-          hasAnswered = false;
-          answerYesBtn.disabled = false;
-          answerNoBtn.disabled = false;
-          
-          // Show host controls for host
-          if (isHost) {
-            hostControls.classList.remove('hidden');
-          } else {
-            hostControls.classList.add('hidden');
-          }
-        } else {
-          console.log("Game is in waiting state");
-          waitingArea.classList.remove('hidden');
-          questionArea.classList.add('hidden');
-        }
-      });
-      
-      // Listen for player list changes
-      gameRef.child('players').on('value', snapshot => {
-        console.log("Players list changed");
-        playerList.innerHTML = '';
-        
-        if (!snapshot.exists()) {
-          console.log("No players found");
-          return;
-        }
-        
-        snapshot.forEach(playerSnapshot => {
-          const player = playerSnapshot.val();
-          const li = document.createElement('li');
-          li.textContent = player.name + (player.isHost ? ' (Host)' : '');
-          playerList.appendChild(li);
-        });
-      });
-      
-      // Listen for answers to current question
-      gameRef.child('answers').on('value', snapshot => {
-        console.log("Answers changed");
-        answersList.innerHTML = '';
-        
-        if (!snapshot || !snapshot.exists()) {
-          console.log("No answers available");
-          answersSection.classList.add('hidden');
-          return;
-        }
-        
-        let answerCount = 0;
-        
-        snapshot.forEach(answerSnapshot => {
-          const answer = answerSnapshot.val();
-          if (answer && answer.questionIndex === currentQuestionIndex) {
-            const li = document.createElement('li');
-            li.textContent = `${answer.playerName}: ${answer.answer}`;
-            answersList.appendChild(li);
-            answerCount++;
-          }
-        });
-        
-        console.log("Found answers:", answerCount);
-        if (answerCount > 0) {
-          answersSection.classList.remove('hidden');
-        } else {
-          answersSection.classList.add('hidden');
-        }
-      });
-      
-      // Clean up game on disconnect for host
-      if (isHost) {
-        const onlineRef = database.ref(".info/connected");
-        onlineRef.on("value", (snap) => {
-          if (snap.val() === true && gameRef) {
-            // User is connected
-            gameRef.child("lastActive").set(firebase.database.ServerValue.TIMESTAMP);
-            
-            // Just mark game as inactive when host disconnects, don't delete
-            gameRef.onDisconnect().update({
-              status: "inactive",
-              lastActive: firebase.database.ServerValue.TIMESTAMP
-            });
-          }
-        });
-      }
-      
-      // Remove player data when any player disconnects
-      if (playerId && gameRef) {
-        gameRef.child('players').child(playerId).onDisconnect().remove();
-      }
-      
-      // Show game screen once everything is set up
-      console.log("Setup complete, showing game screen");
-      showScreen('game-screen');
-      loadingMessage.classList.add('hidden');
-    }
-
-    // Submit an answer to the current question
-    function submitAnswer(answer) {
-      if (hasAnswered) return;
-      console.log("Submitting answer:", answer);
-      
-      const answerData = {
-        playerId: playerId,
-        playerName: playerName,
-        answer: answer,
-        questionIndex: currentQuestionIndex,
-        timestamp: firebase.database.ServerValue.TIMESTAMP
-      };
-      
-      // Generate a unique ID for this answer
-      const answerId = Date.now().toString(36) + Math.random().toString(36).substring(2);
-      
-      gameRef.child('answers').child(answerId).set(answerData)
-        .then(() => {
-          console.log("Answer submitted successfully");
-          hasAnswered = true;
-          answerYesBtn.disabled = true;
-          answerNoBtn.disabled = true;
-          
-          // Show a confirmation message
-          const confirmMessage = document.createElement('p');
-          confirmMessage.textContent = `Your answer "${answer}" has been submitted!`;
-          confirmMessage.style.color = 'green';
-          confirmMessage.style.fontWeight = 'bold';
-          confirmMessage.style.padding = '10px';
-          confirmMessage.style.backgroundColor = '#f0fff0';
-          confirmMessage.style.borderRadius = '5px';
-          document.querySelector('.answer-buttons').after(confirmMessage);
-          
-          // Remove the message after a few seconds
-          setTimeout(() => {
-            confirmMessage.remove();
-          }, 3000);
-        })
-        .catch(error => {
-          console.error('Error submitting answer:', error);
-          showError('Failed to submit your answer. Please try again.');
-        });
-    }
-
-    // Move to the next question (host only)
-    function moveToNextQuestion() {
-      if (!isHost) return;
-      console.log("Moving to next question");
-      
-      gameRef.once('value')
-        .then(snapshot => {
-          const gameData = snapshot.val();
-          const nextIndex = (gameData.currentQuestionIndex || 0) + 1;
-          
-          // Count how many questions we have
-          let questionCount = 0;
-          if (gameData.questions) {
-            questionCount = Object.keys(gameData.questions).length;
-          }
-          
-          console.log(`Current question: ${gameData.currentQuestionIndex}, Next: ${nextIndex}, Total: ${questionCount}`);
-          
-          if (nextIndex < questionCount) {
-            // Clear previous answers
-            gameRef.child('answers').remove()
-              .then(() => {
-                console.log("Cleared previous answers");
-                // Set new question index
-                return gameRef.child('currentQuestionIndex').set(nextIndex);
-              })
-              .then(() => {
-                console.log("Advanced to question", nextIndex);
-                
-                // Reset answer state for all players
-                hasAnswered = false;
-                answerYesBtn.disabled = false;
-                answerNoBtn.disabled = false;
-              })
-              .catch(error => {
-                console.error('Error clearing answers:', error);
-                showError('Failed to move to next question. Please try again.');
-              });
-          } else {
-            alert('Game over! No more questions.');
-            gameRef.child('status').set('completed');
-          }
-        })
-        .catch(error => {
-          console.error('Error moving to next question:', error);
-          showError('Failed to move to next question. Please try again.');
-        });
-    }
-
-    // Start the game (host only)
-    function startGame() {
-      if (!isHost) return;
-      console.log("Starting game");
-      
-      // First make sure we have questions
-      gameRef.child('questions').once('value')
-        .then(snapshot => {
-          if (!snapshot.exists() || Object.keys(snapshot.val()).length === 0) {
-            // If no questions, load default questions
-            console.log("No questions found, loading defaults");
-            return loadQuestions(gameModes).then(loadedQuestions => {
-              const questionsData = {};
-              loadedQuestions.forEach((q, index) => {
-                questionsData[index] = q;
-              });
-              return gameRef.child('questions').set(questionsData);
-            });
-          }
-          return Promise.resolve();
-        })
-        .then(() => {
-          // Clear any previous answers
-          return gameRef.child('answers').remove();
-        })
-        .then(() => {
-          // Then start the game
-          return gameRef.child('status').set('playing');
-        })
-        .then(() => {
-          console.log("Game started successfully");
-          
-          // Reset the current question index
-          return gameRef.child('currentQuestionIndex').set(0);
-        })
-        .catch(error => {
-          console.error('Error starting game:', error);
-          showError('Failed to start game. Please try again.');
-        });
-    }
-
-    // Generate random game ID
-    function generateGameId() {
-      return Math.random().toString(36).substring(2, 8);
+      setTimeout(() => {
+        notification.classList.add('hidden');
+      }, 3000);
     }
 
     // Show error message
@@ -653,6 +124,219 @@ document.querySelector("#noBtn").addEventListener("click", () => {
       errorMessage.textContent = message;
       errorMessage.classList.remove('hidden');
       loadingMessage.classList.add('hidden');
+    }
+
+    // Initialize Socket.IO connection
+    function initializeSocketConnection() {
+      console.log("Initializing Socket.IO connection");
+      
+      // Connect to the Socket.IO server
+      socket = io("https://65a4-217-140-201-101.ngrok-free.app");
+      
+      // Socket connection event
+      socket.on("connect", () => {
+        console.log("Connected to Socket.IO server");
+        loadingMessage.classList.add('hidden');
+        
+        // Get URL parameters
+        const { gameId: urlGameId } = getUrlParams();
+        
+        if (urlGameId) {
+          // Join existing game
+          gameId = urlGameId;
+          joinGame();
+        } else {
+          // Create new game
+          createNewGame();
+        }
+      });
+      
+      // Socket connection error event
+      socket.on("connect_error", (error) => {
+        console.error("Connection error:", error);
+        showError("Failed to connect to game server. Please try again later.");
+      });
+      
+      // Game created event
+      socket.on("gameCreated", (data) => {
+        console.log("Game created:", data);
+        gameId = data.gameId;
+        isHost = true;
+        playerId = data.playerId;
+        
+        // Update game info display
+        gameIdDisplay.textContent = gameId;
+        
+        // Show game link for sharing
+        const gameLink = `${window.location.origin}${window.location.pathname}?game=${gameId}`;
+        showNotification(`Game created! Share this link with your friends: ${gameLink}`);
+        
+        // Show host controls
+        hostControls.classList.remove('hidden');
+        
+        // Add a start game button for the host if it doesn't exist yet
+        if (!document.getElementById('start-game-btn')) {
+          const startGameBtn = document.createElement('button');
+          startGameBtn.id = 'start-game-btn';
+          startGameBtn.textContent = 'Start Game';
+          startGameBtn.addEventListener('click', startGame);
+          hostControls.prepend(startGameBtn);
+        }
+        
+        showScreen('game-screen');
+      });
+      
+      // Game joined event
+      socket.on("gameJoined", (data) => {
+        console.log("Game joined:", data);
+        playerId = data.playerId;
+        isHost = data.isHost;
+        
+        // Update game info display
+        playerNameDisplay.textContent = playerName;
+        gameIdDisplay.textContent = gameId;
+        
+        if (isHost) {
+          hostControls.classList.remove('hidden');
+        }
+        
+        showScreen('game-screen');
+      });
+      
+      // Player list updated event
+      socket.on("playerList", (players) => {
+        console.log("Player list updated:", players);
+        updatePlayerList(players);
+      });
+      
+      // Game started event
+      socket.on("gameStarted", () => {
+        console.log("Game started");
+        waitingArea.classList.add('hidden');
+        questionArea.classList.remove('hidden');
+      });
+      
+      // New question event
+      socket.on("newQuestion", (question) => {
+        console.log("New question received:", question);
+        currentQuestionElement.textContent = question;
+        
+        // Reset answer state
+        hasAnswered = false;
+        answerYesBtn.disabled = false;
+        answerNoBtn.disabled = false;
+        
+        // Clear previous answers
+        answersList.innerHTML = '';
+      });
+      
+      // Answers updated event
+      socket.on("answers", (answers) => {
+        console.log("Answers updated:", answers);
+        updateAnswersList(answers);
+      });
+      
+      // Error event
+      socket.on("error", (error) => {
+        console.error("Game error:", error);
+        showError(error.message || "An error occurred in the game");
+      });
+      
+      // Game not found event
+      socket.on("gameNotFound", () => {
+        console.error("Game not found");
+        showError("Game not found. Please check the game ID and try again.");
+      });
+      
+      // Game over event
+      socket.on("gameOver", () => {
+        console.log("Game over");
+        showNotification("Game Over! No more questions left.", "info");
+      });
+    }
+
+    // Create a new game
+    function createNewGame() {
+      console.log("Creating new game");
+      
+      const { modes } = getUrlParams();
+      
+      socket.emit("createGame", {
+        playerName: playerName,
+        modes: modes || ['general']
+      });
+    }
+
+    // Join an existing game
+    function joinGame() {
+      console.log("Joining game:", gameId);
+      
+      socket.emit("joinGame", {
+        gameId: gameId,
+        playerName: playerName
+      });
+    }
+
+    // Start the game (host only)
+    function startGame() {
+      if (!isHost) return;
+      console.log("Starting game");
+      
+      socket.emit("startGame", { gameId: gameId });
+    }
+
+    // Submit an answer to the current question
+    function submitAnswer(answer) {
+      if (hasAnswered) return;
+      console.log("Submitting answer:", answer);
+      
+      socket.emit("submitAnswer", {
+        gameId: gameId,
+        playerId: playerId,
+        answer: answer
+      });
+      
+      hasAnswered = true;
+      answerYesBtn.disabled = true;
+      answerNoBtn.disabled = true;
+      
+      showNotification(`Your answer "${answer}" has been submitted!`);
+    }
+
+    // Move to the next question (host only)
+    function moveToNextQuestion() {
+      if (!isHost) return;
+      console.log("Moving to next question");
+      
+      socket.emit("nextQuestion", { gameId: gameId });
+    }
+
+    // Update player list in the UI
+    function updatePlayerList(players) {
+      playerList.innerHTML = '';
+      
+      players.forEach(player => {
+        const li = document.createElement('li');
+        li.textContent = player.name + (player.isHost ? ' (Host)' : '');
+        playerList.appendChild(li);
+      });
+    }
+
+    // Update answers list in the UI
+    function updateAnswersList(answers) {
+      answersList.innerHTML = '';
+      
+      answers.forEach(answer => {
+        const li = document.createElement('li');
+        li.textContent = `${answer.playerName}: ${answer.answer}`;
+        answersList.appendChild(li);
+      });
+      
+      if (answers.length > 0) {
+        answersSection.classList.remove('hidden');
+      } else {
+        answersSection.classList.add('hidden');
+      }
     }
 
     // Event listeners
@@ -668,7 +352,9 @@ document.querySelector("#noBtn").addEventListener("click", () => {
         
         loadingMessage.classList.remove('hidden');
         errorMessage.classList.add('hidden');
-        initializeGame();
+        
+        // Initialize Socket.IO connection
+        initializeSocketConnection();
       });
       
       // Also allow pressing Enter in the name input
@@ -692,59 +378,7 @@ document.querySelector("#noBtn").addEventListener("click", () => {
       
       // Print URL parameters to console for debugging
       console.log("URL parameters:", getUrlParams());
-      
-      // Test Firebase connection
-      const connectedRef = firebase.database().ref(".info/connected");
-      connectedRef.on("value", (snap) => {
-        if (snap.val() === true) {
-          console.log("Connected to Firebase");
-        } else {
-          console.log("Not connected to Firebase");
-        }
-      });
     });
-
-    // tää piti kans lisää t chtagpt
-    function sendAnswer(answer) {
-  const message = {
-    type: 'answer',
-    answer: answer,
-    playerId: myPlayerId
-  };
-  sendMessage(message);
-}
-
-function showQuestion(questionText) {
-  document.getElementById("question-container").innerText = questionText;
-}
-
-function handleOtherPlayerAnswer(data) {
-  console.log(`Pelaaja ${data.playerId} vastasi: ${data.answer}`);
-}
-
   </script>
-
-<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-<script>
-  const socket = io("https://65a4-217-140-201-101.ngrok-free.app");
-
-  socket.on("connect", () => {
-    console.log("Yhdistetty palvelimeen");
-  });
-
-  socket.on("newQuestion", (question) => {
-    // näytä uusi kysymys pelaajalle
-    document.getElementById("question").innerText = question;
-  });
-
-  function sendAnswer(answer) {
-    socket.emit("answer", answer);
-  }
-</script>
-
-<div id="question">Ladataan kysymystä...</div>
-<button onclick="sendAnswer('yes')">Kyllä</button>
-<button onclick="sendAnswer('no')">Ei</button>
-
 </body>
 </html>
