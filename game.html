@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
   <title>Never Have I Ever</title>
   <link rel="stylesheet" href="style.css" />
-  
 </head>
 <body>
   <!-- Name input screen -->
@@ -56,7 +56,7 @@
   </div>
 
   <!-- Socket.IO script -->
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js" integrity="sha384-zGm9Y9jTjLBNLFWGT7siL9I3EW2/pA3JgDCZ1lLGDLtJU7pBPgKZ9PUyQZPnCSBh" crossorigin="anonymous"></script>
 
   <script>
     // Game variables
@@ -130,13 +130,20 @@
     function initializeSocketConnection() {
       console.log("Initializing Socket.IO connection");
       
-      // Connect to the Socket.IO server
-      socket = io("https://65a4-217-140-201-101.ngrok-free.app");
+      // Connect to the Socket.IO server with connection options
+      socket = io("https://65a4-217-140-201-101.ngrok-free.app", {
+        transports: ['websocket', 'polling'],
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+        timeout: 20000
+      });
       
       // Socket connection event
       socket.on("connect", () => {
-        console.log("Connected to Socket.IO server");
+        console.log("Connected to Socket.IO server with ID:", socket.id);
         loadingMessage.classList.add('hidden');
+        showNotification("Connected to server successfully!", "success");
         
         // Get URL parameters
         const { gameId: urlGameId } = getUrlParams();
@@ -144,18 +151,35 @@
         if (urlGameId) {
           // Join existing game
           gameId = urlGameId;
-          joinGame();
+          setTimeout(() => {
+            joinGame();
+          }, 500); // Short delay to ensure connection is stable
         } else {
           // Create new game
-          createNewGame();
+          setTimeout(() => {
+            createNewGame();
+          }, 500); // Short delay to ensure connection is stable
         }
       });
       
       // Socket connection error event
       socket.on("connect_error", (error) => {
         console.error("Connection error:", error);
-        showError("Failed to connect to game server. Please try again later.");
+        showError("Failed to connect to game server: " + error.message);
       });
+      
+      socket.on("disconnect", (reason) => {
+        console.error("Disconnected:", reason);
+        showError("Disconnected from game server: " + reason);
+      });
+      
+      // Add timeout for connection
+      setTimeout(() => {
+        if (!socket.connected) {
+          console.error("Connection timeout");
+          showError("Connection timed out. Server might be unreachable.");
+        }
+      }, 10000);
       
       // Game created event
       socket.on("gameCreated", (data) => {
@@ -261,20 +285,34 @@
       
       const { modes } = getUrlParams();
       
-      socket.emit("createGame", {
-        playerName: playerName,
-        modes: modes || ['general']
-      });
+      try {
+        socket.emit("createGame", {
+          playerName: playerName,
+          modes: modes || ['general']
+        });
+        
+        console.log("Create game event sent");
+      } catch (error) {
+        console.error("Error sending createGame event:", error);
+        showError("Failed to create game: " + error.message);
+      }
     }
 
     // Join an existing game
     function joinGame() {
       console.log("Joining game:", gameId);
       
-      socket.emit("joinGame", {
-        gameId: gameId,
-        playerName: playerName
-      });
+      try {
+        socket.emit("joinGame", {
+          gameId: gameId,
+          playerName: playerName
+        });
+        
+        console.log("Join game event sent");
+      } catch (error) {
+        console.error("Error sending joinGame event:", error);
+        showError("Failed to join game: " + error.message);
+      }
     }
 
     // Start the game (host only)
@@ -353,8 +391,23 @@
         loadingMessage.classList.remove('hidden');
         errorMessage.classList.add('hidden');
         
-        // Initialize Socket.IO connection
-        initializeSocketConnection();
+        // Test connection to server first
+        fetch("https://65a4-217-140-201-101.ngrok-free.app/ping")
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`Server responded with status: ${response.status}`);
+            }
+            return response.text();
+          })
+          .then(() => {
+            console.log("Server ping successful, initializing Socket.IO");
+            // Initialize Socket.IO connection
+            initializeSocketConnection();
+          })
+          .catch(error => {
+            console.error("Server ping failed:", error);
+            showError(`Cannot reach game server. Ensure you're on the same network or try using mobile data: ${error.message}`);
+          });
       });
       
       // Also allow pressing Enter in the name input
