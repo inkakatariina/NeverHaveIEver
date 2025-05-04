@@ -386,5 +386,111 @@
       });
     }
   </script>
+
+  <!-- Start Game Button (lisää tämä QR-koodin alle) -->
+<div class="host-controls">
+  <h3>Isäntänä voit aloittaa pelin, kun kaikki pelaajat ovat liittyneet:</h3>
+  <button id="start-game-host-btn" class="action-button">Aloita peli</button>
+  <p id="start-game-message" class="message hidden"></p>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const startGameBtn = document.getElementById('start-game-host-btn');
+    const startGameMessage = document.getElementById('start-game-message');
+    
+    // Oleta että gameId on jo määritelty sivulla (sama kuin QR-koodissa)
+    // Jos ei ole, varmista että se määritellään ennen tätä skriptiä
+    
+    startGameBtn.addEventListener('click', function() {
+      // Näytä latausviesti
+      startGameMessage.textContent = 'Käynnistetään peliä...';
+      startGameMessage.classList.remove('hidden');
+      startGameMessage.style.color = 'blue';
+      
+      // Hae viittaus peliin
+      const gameRef = firebase.database().ref(`games/${gameId}`);
+      
+      // Tarkista ensin, että pelaajia on liittynyt
+      gameRef.child('players').once('value')
+        .then(snapshot => {
+          if (!snapshot.exists() || Object.keys(snapshot.val()).length < 1) {
+            throw new Error('Ei pelaajia');
+          }
+          
+          // Aseta pelin tila 'playing'
+          return gameRef.child('status').set('playing');
+        })
+        .then(() => {
+          // Aseta kysymysindeksi nollaan
+          return gameRef.child('currentQuestionIndex').set(0);
+        })
+        .then(() => {
+          startGameMessage.textContent = 'Peli käynnistetty onnistuneesti! Pelaajien näyttö päivittyy automaattisesti.';
+          startGameMessage.style.color = 'green';
+          
+          // Poista viesti muutaman sekunnin kuluttua
+          setTimeout(() => {
+            startGameMessage.classList.add('hidden');
+          }, 5000);
+          
+          // Poista nappi käytöstä pelin käynnistyttyä
+          startGameBtn.disabled = true;
+          startGameBtn.textContent = 'Peli käynnissä';
+        })
+        .catch(error => {
+          console.error('Virhe pelin käynnistyksessä:', error);
+          
+          if (error.message === 'Ei pelaajia') {
+            startGameMessage.textContent = 'Peliä ei voida käynnistää: Ei pelaajia liittyneenä';
+          } else {
+            startGameMessage.textContent = 'Virhe pelin käynnistyksessä. Yritä uudelleen.';
+          }
+          startGameMessage.style.color = 'red';
+        });
+    });
+  });
+</script>
+
+<style>
+  .host-controls {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f5f5f5;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-align: center;
+  }
+  
+  .action-button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+  }
+  
+  .action-button:hover {
+    background-color: #45a049;
+  }
+  
+  .action-button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
+  
+  .message {
+    margin-top: 10px;
+    padding: 8px;
+    border-radius: 4px;
+  }
+  
+  .hidden {
+    display: none;
+  }
+</style>
 </body>
 </html>
