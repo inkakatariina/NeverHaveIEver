@@ -12,6 +12,7 @@
   </style>
 </head>
 <body>
+
   <!-- Takaisin-nappi -->
   <button class="back-button hidden" onclick="goBack()">←</button>
 
@@ -62,6 +63,7 @@
   <!-- Jaa peli - valitse pelimoodi -->
   <div class="screen hidden" id="share-setup">
     <h2>Choose game mode to share</h2>
+
     <fieldset class="mode-selection">
       <legend>Select one or more game modes before sharing:</legend>
       <label class="mode-option"><input type="checkbox" name="share-mode" value="workAndSchool"><span>Work & School</span></label>
@@ -103,11 +105,15 @@
     let questions = [];
     let flow = null; // 'getStarted' or 'shareGame'
 
+
+    // Funktio näyttämään ruudut
     function showScreen(id) {
       const currentVisible = document.querySelector('.screen:not(.hidden)');
       if (currentVisible) {
         screenHistory.push(currentVisible.id);
       }
+
+      //jotain outoo tässä kohdassa nyt on
       document.querySelectorAll('.screen').forEach(screen => screen.classList.add('hidden'));
       document.getElementById(id).classList.remove('hidden');
       document.querySelector('.back-button').classList.toggle('hidden', screenHistory.length === 0);
@@ -159,11 +165,11 @@
       flow = 'getStarted';
       showScreen('add-players');
     }
-    function startGameFlow() {
-  flow = 'getStarted';
-  showScreen('choose-game');
-}
 
+    function startGameFlow() {
+      flow = 'getStarted';
+      showScreen('choose-game');
+    }
 
     function startGameBasedOnFlow() {
       selectedModes = [];
@@ -175,6 +181,7 @@
       }
     }
 
+    // Funktio kysymysten hakemiseen JSON-tiedostosta
     function fetchQuestions() {
       fetch('data.json')
         .then(response => response.json())

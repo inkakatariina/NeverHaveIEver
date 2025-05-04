@@ -15,8 +15,15 @@
     <button onclick="submitName()">Join Game</button>
   </div>
 
+   <!-- Pelin kysymykset -->
+   <div class="screen hidden" id="question-screen">
+    <h2 id="game-mode-title">Game Question</h2>
+    <p id="game-question"></p>
+    <button onclick="nextQuestion()">Next Question</button>
+  </div>
+
   <!-- Varsinainen pelinäkymä -->
-  <div id="game-screen" class="screen hidden">
+  <div id="question-screen" class="screen hidden">
     <h1>Welcome to the game!</h1>
     <p id="playerInfo">Player:</p>
     <p id="gameIdInfo">Game ID:</p>
@@ -34,20 +41,35 @@
   </div>
 
   <!-- Firebase-kirjastot -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+ <!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script> <!-- If using authentication -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-analytics.js"></script> <!-- Optional for Analytics -->
+
+
   <script>
+    // Firebase-konfiguraatio
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
+      apiKey: "AIzaSyB_ZHKotLJyqdGNjQ9anUcMZwkFk_JFfuU",
+      authDomain: "never-have-i-ever-9bd43.firebaseapp.com",
+      projectId: "never-have-i-ever-9bd43",
+      storageBucket: "never-have-i-ever-9bd43.firebasestorage.app",
+      messagingSenderId: "446411576915",
+      appId: "1:446411576915:web:499e1058643d295785d8a6",
+      measurementId: "G-Y45EG0CKL0"
     };
+
+    // Alustetaan Firebase
     firebase.initializeApp(firebaseConfig);
+    const analytics = firebase.analytics();
+    const auth = firebase.auth(); // If using authentication
+    
+    // Esimerkiksi: Tietokannan käyttö
+    const database = firebase.database();
+    // Voit käyttää 'database' objektia tallentamaan ja lukemaan tietoja Firebase-tietokannasta
   </script>
+
 
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
   <script>
@@ -60,26 +82,54 @@
 
     function showScreen(id) {
       const currentVisible = document.querySelector('.screen:not(.hidden)');
-      if (currentVisible) screenHistory.push(currentVisible.id);
+      if (currentVisible) {
+        screenHistory.push(currentVisible.id);
+      }
       document.querySelectorAll('.screen').forEach(screen => screen.classList.add('hidden'));
       document.getElementById(id).classList.remove('hidden');
+      document.querySelector('.back-button').classList.toggle('hidden', screenHistory.length === 0);
     }
 
-    function submitName() {
-      const playerName = document.getElementById('playerNameInput').value.trim();
-      if (!playerName) {
-        alert('Please enter your name.');
-        return;
-      }
-
-      document.getElementById('playerInfo').innerText = `Player: ${playerName}`;
-      showScreen('game-screen');
-
-      selectedModes = getModesFromURL();
-      if (selectedModes.length === 0) selectedModes = ['general'];
-
-      fetchQuestions();
+    function getModesFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const modes = [];
+  for (const [key, value] of params.entries()) {
+    if (key === 'mode') {
+      modes.push(value);
     }
+  }
+  return modes;
+}
+
+// Kuuluu firebase juttuun
+function submitName() {
+  const playerName = document.getElementById('playerNameInput').value.trim();
+  if (!playerName) {
+    alert('Please enter your name.');
+    return;
+  }
+
+  document.getElementById('playerInfo').innerText = `Player: ${playerName}`;
+  showScreen('question-screen');
+
+  const params = new URLSearchParams(window.location.search);
+  const gameId = params.get('game') || 'default';
+
+  // Tallenna pelaaja tietokantaan
+  firebase.database().ref(`games/${gameId}/players`).push({
+    name: playerName
+  });
+
+  // Kuuntele muiden pelaajien vastauksia
+  listenForAnswers(gameId);
+
+  selectedModes = getModesFromURL();
+  if (selectedModes.length === 0) selectedModes = ['general'];
+
+  fetchQuestions();
+}
+
+
 
     function getModesFromURL() {
       const params = new URLSearchParams(window.location.search);
@@ -90,29 +140,32 @@
       return modes;
     }
 
+    function startGameBasedOnFlow() {
+      selectedModes = [];
+      document.querySelectorAll('input[name="mode"]:checked').forEach(cb => selectedModes.push(cb.value));
+      if (selectedModes.length === 0) return alert('Please select at least one game mode.');
+      if (flow === 'getStarted') {
+        fetchQuestions();
+        showScreen('question-screen');
+      }
+    }
+
+
     function fetchQuestions() {
-      fetch('data.json')
+        fetch('./data.json') // Tämä hakee data.json tiedoston nykyisestä hakemistosta
         .then(response => response.json())
         .then(data => {
           questions = selectedModes.flatMap(mode => data[mode] || []);
-          shuffleArray(questions);
           showQuestion();
         })
         .catch(error => console.error('Error loading questions:', error));
     }
 
-    function shuffleArray(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
-    }
-
     function showQuestion() {
       if (currentQuestionIndex < questions.length) {
-        document.getElementById('question').innerText = questions[currentQuestionIndex];
+        document.getElementById('game-question').innerText = questions[currentQuestionIndex];
       } else {
-        document.getElementById('question').innerText = 'No more questions!';
+        alert('No more questions!');
       }
     }
 
@@ -122,12 +175,32 @@
     }
 
     function submitAnswer(answer) {
-      const list = document.getElementById('answers');
-      const li = document.createElement('li');
-      li.textContent = answer;
-      list.appendChild(li);
-      document.getElementById('answers-section').classList.remove('hidden');
-    }
+  const playerName = document.getElementById('playerNameInput').value.trim();
+  const params = new URLSearchParams(window.location.search);
+  const gameId = params.get('game') || 'default';
+
+  // Tallenna vastaus tietokantaan
+  firebase.database().ref(`games/${gameId}/answers`).push({
+    name: playerName,
+    answer: answer
+  });
+}
+
+
+
+
+function listenForAnswers(gameId) {
+  const answersRef = firebase.database().ref(`games/${gameId}/answers`);
+  answersRef.on('child_added', snapshot => {
+    const data = snapshot.val();
+    const li = document.createElement('li');
+    li.textContent = `${data.name}: ${data.answer}`;
+    document.getElementById('answers').appendChild(li);
+    document.getElementById('answers-section').classList.remove('hidden');
+  });
+}
+
+
 
     function generateQR() {
       const gameId = Math.random().toString(36).substring(2, 8);
@@ -138,6 +211,33 @@
         document.getElementById('qr-url').innerText = url;
       });
     }
+
+
+    window.onload = function() {
+  // Lataa valitut pelimoodit localStoragesta
+  const selectedModes = JSON.parse(localStorage.getItem('selectedGameModes')) || [];
+  console.log('Selected modes in game:', selectedModes);
+
+  if (selectedModes.length > 0) {
+    // Tee jotain pelin moodin kanssa, esimerkiksi lataa kysymykset vastaavasta kategoriasta
+    fetch('data.json')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        questions = selectedModes.flatMap(mode => data[mode] || []);
+        showQuestion();  // Näytä ensimmäinen kysymys
+      })
+      .catch(error => {
+        console.error('Error loading questions:', error);
+        alert('There was an error loading the questions.');
+      });
+  }
+};
+
   </script>
 
 </body>
