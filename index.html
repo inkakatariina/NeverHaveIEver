@@ -126,28 +126,28 @@
         "Never have I ever skipped a class.",
         // ...muut kysymykset tässä...
       ],
-      "embarrassingMoments": [
+      "Embarrassing & awkward moments": [
         "Never have I ever called a teacher 'mom' or 'dad'.",
         "Never have I ever tripped in front of the entire class.",
         "Never have I ever answered a question confidently and been completely wrong.",
         // ...muut kysymykset tässä...
       ],
-      "travelAdventure": [
+      "Tarvel & adventure": [
         "Never have I ever traveled outside my country.",
         "Never have I ever gone camping.",
         "Never have I ever been on a cruise."
       ],
-      "relationshipDating": [
+      "Relationship & dating": [
         "Never have I ever been on a blind date.",
         "Never have I ever had a long-distance relationship.",
         "Never have I ever had a crush on a friend's partner."
       ],
-      "partyFun": [
+      "Party and fun": [
         "Never have I ever attended a music festival.",
         "Never have I ever crashed a party.",
         "Never have I ever done karaoke in public."
       ],
-      "moneyShopping": [
+      "Money & shopping": [
         "Never have I ever bought something I couldn't afford.",
         "Never have I ever returned an item after using it.",
         "Never have I ever forgotten my wallet when going shopping."
@@ -160,7 +160,7 @@
       "all": [] // Tämä täytetään myöhemmin
     };
 
-    // Funktio näyttämään ruudut
+    // Function to show screens
     function showScreen(id) {
       const currentVisible = document.querySelector('.screen:not(.hidden)');
       if (currentVisible) {
@@ -224,24 +224,24 @@
       showScreen('choose-game');
     }
 
-    // Yhdistä kaikki kategoriat 'all'-kategoriaan
+    // Combine all categories into 'all'
     function populateAllCategory(data) {
       if (!data) return;
       
       data.all = [];
       
-      // Käydään läpi kaikki kategoriat paitsi 'all'
+      // Go through all categories except 'all'
       for (const category in data) {
         if (category !== 'all' && Array.isArray(data[category])) {
           data.all = data.all.concat(data[category]);
         }
       }
       
-      // Sekoitetaan 'all'-kategoria satunnaiseen järjestykseen
+      // Shuffle 'all' category
       data.all.sort(() => Math.random() - 0.5);
     }
 
-    // Lataa data.json tai käytä varmuuskopiota
+    // Load data.json or use backup
     function loadGameData() {
       return new Promise((resolve) => {
         fetch('data.json')
@@ -259,7 +259,7 @@
           })
           .catch(error => {
             console.error('Error loading questions:', error);
-            gameData = JSON.parse(JSON.stringify(defaultGameData)); // Käytetään kopiota varmuuskopiosta
+            gameData = JSON.parse(JSON.stringify(defaultGameData)); // Use a copy of the backup
             console.log("Using default game data instead:", gameData);
             populateAllCategory(gameData);
             resolve(gameData);
@@ -267,7 +267,7 @@
       });
     }
 
-    // Alusta peli lataamalla data
+    // Initialize game by loading data
     window.addEventListener('DOMContentLoaded', () => {
       loadGameData();
     });
@@ -287,9 +287,9 @@
       }
     }
 
-    // Aseta kysymykset valittujen pelimoodien mukaan
+    // Set up questions based on selected game modes
     function setupGameQuestions() {
-      // Jos gameData ei ole vielä latautunut, lataa se nyt
+      // If gameData is not loaded yet, load it now
       if (!gameData) {
         loadGameData().then(data => {
           extractQuestionsFromData(data);
@@ -299,7 +299,7 @@
       }
     }
 
-    // Hae kysymykset data-objektista
+    // Get questions from data object
     function extractQuestionsFromData(data) {
       questions = [];
       
@@ -309,34 +309,34 @@
         }
       });
       
-      // Sekoita kysymykset satunnaiseen järjestykseen
+      // Shuffle questions
       questions.sort(() => Math.random() - 0.5);
       
-      // Nollaa kysymysindeksi
+      // Reset question index
       currentQuestionIndex = 0;
       
-      // Päivitä pelin otsikko valittujen moodien mukaan
+      // Update game title based on selected modes
       updateGameModeTitle();
       
-      // Näytä ensimmäinen kysymys
+      // Show first question
       showQuestion();
     }
 
-    // Päivitä pelin otsikko valittujen moodien mukaan
+    // Update game title based on selected modes
     function updateGameModeTitle() {
       let title = "Selected modes: ";
       if (selectedModes.includes('all')) {
         title += "All Categories";
       } else {
         title += selectedModes.map(mode => {
-          // Muuta avainsanat käyttäjäystävällisemmiksi
+          // Convert keywords to user-friendly names
           const modeMap = {
             'workAndSchool': 'Work & School',
-            'embarrassingMoments': 'Embarrassing & Awkward Moments',
-            'travelAdventure': 'Travel & Adventure',
-            'relationshipDating': 'Relationship & Dating',
-            'partyFun': 'Party & Fun',
-            'moneyShopping': 'Money & Shopping',
+            'Embarrassing & awkward moments': 'Embarrassing & Awkward Moments',
+            'Tarvel & adventure': 'Travel & Adventure',
+            'Relationship & dating': 'Relationship & Dating',
+            'Party and fun': 'Party & Fun',
+            'Money & shopping': 'Money & Shopping',
             'girlsNight': 'Girls\' Night'
           };
           return modeMap[mode] || mode;
@@ -355,7 +355,7 @@
       if (currentQuestionIndex < questions.length) {
         document.getElementById('game-question').innerText = questions[currentQuestionIndex];
       } else {
-        // Kun kaikki kysymykset on käyty läpi, sekoitetaan uudelleen
+        // If we've gone through all questions, shuffle again
         questions.sort(() => Math.random() - 0.5);
         currentQuestionIndex = 0;
         document.getElementById('game-question').innerText = questions[currentQuestionIndex];
@@ -379,9 +379,9 @@
     }
 
     function generateQR() {
-      const gameId = Math.random().toString(36).substring(2, 8);
+      gameId = Math.random().toString(36).substring(2, 8);
       const params = selectedModes.map(mode => `mode=${encodeURIComponent(mode)}`).join('&');
-      const url = `https://inkakatariina.github.io/NeverHaveIEver/game.html?game=${gameId}&${params}`;
+      const url = `${window.location.origin}${window.location.pathname.replace('index.html', '')}game.html?game=${gameId}&${params}`;
       
       QRCode.toCanvas(document.getElementById('qrcode'), url, {
         width: 200,
@@ -390,6 +390,50 @@
         if (error) console.error(error);
         document.getElementById('qr-url').innerText = url;
       });
+    }
+    
+    // Copy game URL to clipboard
+    function copyGameUrl() {
+      const url = document.getElementById('qr-url').innerText;
+      navigator.clipboard.writeText(url).then(() => {
+        showNotification("URL copied to clipboard!");
+      }).catch(err => {
+        console.error('Could not copy text: ', err);
+      });
+    }
+    
+    // Go to game.html as host
+    function goToGameAsHost() {
+      if (!gameId) {
+        alert("Error: Game ID not generated. Please try again.");
+        return;
+      }
+      
+      // Prompt for host name
+      const hostName = prompt("Enter your name (as the host):", "Host");
+      if (!hostName) return;
+      
+      // Create URL with game parameters
+      const gameUrl = document.getElementById('qr-url').innerText;
+      
+      // Add host parameter
+      const url = new URL(gameUrl);
+      url.searchParams.append('host', 'true');
+      url.searchParams.append('name', hostName);
+      
+      // Navigate to game page
+      window.location.href = url.toString();
+    }
+    
+    // Show notification
+    function showNotification(message) {
+      const notification = document.getElementById('notification');
+      notification.textContent = message;
+      notification.classList.remove('hidden');
+      
+      setTimeout(() => {
+        notification.classList.add('hidden');
+      }, 3000);
     }
   </script>
 </body>

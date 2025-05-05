@@ -51,6 +51,18 @@
         <button id="next-question-btn">Next Question</button>
       </div>
     </div>
+
+    <div id="no-server-area" class="hidden">
+        <h3>No Server Connection</h3>
+        <p>This game requires a server connection to play multiplayer. Currently running in local mode.</p>
+        <div id="local-mode-controls">
+          <h4>Selected Categories:</h4>
+          <p id="selected-categories"></p>
+          <p id="local-question"></p>
+          <button id="local-next-btn">Next Question</button>
+        </div>
+      </div>
+    </div>
     
     <div id="notification" class="notification hidden"></div>
   </div>
@@ -66,6 +78,51 @@
     let isHost = false;
     let hasAnswered = false;
     let socket = null;
+    let selectedModes = [];
+    let localQuestions = [];
+    let currentQuestionIndex = 0;
+    let isServerMode = true;
+    let players = [];
+    
+    // Default game data as a backup
+    const defaultGameData = {
+      "workAndSchool": [
+        "Never have I ever fallen asleep in class.",
+        "Never have I ever cheated on a test.",
+        "Never have I ever forgotten to do my homework."
+      ],
+      "Embarrassing & awkward moments": [
+        "Never have I ever called a teacher 'mom' or 'dad'.",
+        "Never have I ever tripped in front of the entire class.",
+        "Never have I ever answered a question confidently and been completely wrong."
+      ],
+      "Tarvel & adventure": [
+        "Never have I ever traveled outside my country.",
+        "Never have I ever gone camping.",
+        "Never have I ever been on a cruise."
+      ],
+      "Relationship & dating": [
+        "Never have I ever been on a blind date.",
+        "Never have I ever had a long-distance relationship.",
+        "Never have I ever had a crush on a friend's partner."
+      ],
+      "Party and fun": [
+        "Never have I ever attended a music festival.",
+        "Never have I ever crashed a party.",
+        "Never have I ever done karaoke in public."
+      ],
+      "Money & shopping": [
+        "Never have I ever bought something I couldn't afford.",
+        "Never have I ever returned an item after using it.",
+        "Never have I ever forgotten my wallet when going shopping."
+      ],
+      "girlsNight": [
+        "Never have I ever had a girls' night out.",
+        "Never have I ever had a spa day with friends.",
+        "Never have I ever gone on a shopping spree with friends."
+      ]
+    };
+
 
     // DOM Elements
     const nameScreen = document.getElementById('name-screen');
