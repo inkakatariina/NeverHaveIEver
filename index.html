@@ -81,12 +81,17 @@
     <button onclick="showScreen('welcome-screen')">Back to Welcome</button>
   </div>
 
-  <!-- QR-näyttö -->
+  <!-- QR screen -->
   <div class="screen hidden" id="qr-section">
     <h2>Share the Game</h2>
     <p>Scan the QR code or share the link below to join:</p>
     <canvas id="qrcode"></canvas>
     <p id="qr-url"></p>
+    <button class="copy-url-btn" onclick="copyGameUrl()">Copy URL</button>
+    <div class="host-controls">
+      <p>Once all players have joined, you can start the game:</p>
+      <button id="go-to-game-btn" onclick="goToGameAsHost()">Start Game as Host</button>
+    </div>
     <button onclick="showScreen('welcome-screen')">Back to Welcome</button>
   </div>
 
@@ -97,6 +102,7 @@
     <button onclick="nextQuestion()">Next Question</button>
     <button onclick="showScreen('choose-game')">Change Mode</button>
   </div>
+  <div id="notification" class="notification hidden"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
   <script>
